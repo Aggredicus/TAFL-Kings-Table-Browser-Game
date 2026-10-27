@@ -1,0 +1,23 @@
+name: Offline release checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python source/packaging checks
+        run: python3 -m unittest discover -s tests -v
+      - name: Standalone JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text()
+          scripts=re.findall(r'<script\b[^>]*>(.*?)</script>',html,re.S|re.I)
+          assert len(scripts)==1
+          Path('/tmp/tafl-app.js').write_text(scripts[0])
+          PY
+          node --check /tmp/tafl-app.js
