@@ -1,0 +1,54 @@
+name: Publish TAFL ATLAS v1.0.0
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v1.0.0.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release:
+    if: github.repository == 'Aggredicus/TAFL-Kings-Table-Browser-Game' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify shipped source and regression checks
+        run: |
+          python3 -m unittest discover -s tests -v
+          cmp index.html TAFL_ATLAS_Offline_v1.0.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text()
+          scripts=re.findall(r'<script\b[^>]*>(.*?)</script>', html, re.S|re.I)
+          assert len(scripts)==1, 'Expected one inline script'
+          Path('/tmp/tafl-release.js').write_text(scripts[0])
+          PY
+          node --check /tmp/tafl-release.js
+      - name: Assemble standalone assets with checksums
+        run: |
+          mkdir -p dist
+          cp TAFL_ATLAS_Offline_v1.0.html dist/
+          zip -q -9 dist/TAFL_ATLAS_v1.0_Offline_Public.zip index.html TAFL_ATLAS_Offline_v1.0.html README.md RELEASE_NOTES_v1.0.0.md CHANGELOG.md QA_REPORT.md SECURITY.md CONTRIBUTING.md AGENTS.md LICENSE tests/test_release.py
+          (cd dist && sha256sum TAFL_ATLAS_Offline_v1.0.html TAFL_ATLAS_v1.0_Offline_Public.zip > SHA256SUMS.txt)
+      - name: Create tag v1.0.0 and publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            echo 'v1.0.0 release already exists; not replacing published artifacts.'
+            exit 0
+          fi
+          gh release create v1.0.0 \
+            dist/TAFL_ATLAS_Offline_v1.0.html \
+            dist/TAFL_ATLAS_v1.0_Offline_Public.zip \
+            dist/SHA256SUMS.txt \
+            --target "$GITHUB_SHA" \
+            --title 'TAFL ATLAS v1.0.0 — Offline Public Release' \
+            --notes-file RELEASE_NOTES_v1.0.0.md \
+            --latest
