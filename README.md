@@ -2,6 +2,16 @@
 
 A self-contained HTML tafl collection. Open `TAFL_ATLAS_Offline_v1.0.html` in a modern browser. Nothing else needs to be installed; there are no external scripts, images, fonts, APIs, trackers, or CDNs.
 
+## GitHub Pages hosting
+
+The game can also be played from a free GitHub Pages link:
+
+**https://aggredicus.github.io/TAFL-Kings-Table-Browser-Game/**
+
+The repository ships `index.html` and `.nojekyll` in its root. **On first setup, a repository administrator must activate Pages** in GitHub: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` → Folder: `/(root)` → Save**. The URL above works after GitHub reports a successful deployment; committing these files alone does not activate Pages.
+
+After activation, GitHub republishes updates pushed to `main` automatically. Pages hosting loads the static HTML; gameplay, game saves and heuristic opponents run locally in the visiting browser without connecting to a game server. Cross-device play is still manual match-code exchange. The offline download continues to work separately.
+
 ## Getting started
 
 1. Open the HTML file from the device's file manager (or download it to the device and open in a browser).
